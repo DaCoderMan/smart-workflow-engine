@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -48,7 +48,7 @@ class WorkflowExecution(BaseModel):
     workflow_name: str
     trigger: TriggerType
     status: ExecutionStatus = ExecutionStatus.QUEUED
-    started_at: datetime = Field(default_factory=datetime.utcnow)
+    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     finished_at: datetime | None = None
     input_data: dict[str, Any] = {}
     steps: list[StepResult] = []

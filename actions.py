@@ -288,6 +288,12 @@ def _flatten(d: dict, out: dict, prefix: str = ""):
         key = f"{prefix}{k}" if not prefix else f"{prefix}__{k}"
         if isinstance(v, dict):
             _flatten(v, out, key)
+            # Expose "input" sub-keys directly at the top level so that
+            # conditions like ``file_type in ('pdf', ...)`` resolve without
+            # needing the ``input__`` prefix.
+            if not prefix and k == "input":
+                for inner_k, inner_v in v.items():
+                    out.setdefault(inner_k, inner_v)
         else:
             out[key] = v
         # Also keep top-level keys accessible

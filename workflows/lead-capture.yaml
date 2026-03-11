@@ -36,7 +36,7 @@ steps:
     action: http_request
     config:
       method: POST
-      url: "https://sheets.googleapis.com/v4/spreadsheets/SHEET_ID/values/Leads!A1:append"
+      url: "https://sheets.googleapis.com/v4/spreadsheets/{{ env.GOOGLE_SHEET_ID }}/values/Leads!A1:append"
       headers:
         Authorization: "Bearer {{ env.GOOGLE_TOKEN }}"
         Content-Type: application/json

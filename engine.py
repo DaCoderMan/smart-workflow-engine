@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from actions import get_action
@@ -75,6 +76,7 @@ class WorkflowEngine:
                 "input": input_data or {},
                 "workflow": {"id": workflow.id, "name": workflow.name},
                 "steps": {},
+                "env": dict(os.environ),
             }
 
             has_failure = False
@@ -135,7 +137,7 @@ class WorkflowEngine:
                             skip_remaining = True
 
             # Determine final status
-            execution.finished_at = datetime.utcnow()
+            execution.finished_at = datetime.now(timezone.utc)
             if has_failure and skip_remaining:
                 execution.status = ExecutionStatus.FAILED
             elif has_failure:
