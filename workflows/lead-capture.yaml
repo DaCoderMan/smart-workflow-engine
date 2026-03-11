@@ -1,0 +1,69 @@
+id: lead-capture
+name: Lead Capture Pipeline
+description: >
+  Receives lead data via webhook, validates required fields,
+  appends the lead to a Google Sheet, and sends a Slack notification.
+
+trigger:
+  type: webhook
+  config:
+    webhook_id: new-lead
+
+steps:
+  - name: validate_lead
+    action: validate
+    config:
+      required_fields:
+        - name
+        - email
+        - source
+      field_types:
+        name: str
+        email: str
+    on_error: stop
+
+  - name: format_for_sheet
+    action: transform
+    config:
+      mapping:
+        row_name: "{{ input.name }}"
+        row_email: "{{ input.email }}"
+        row_source: "{{ input.source }}"
+        row_company: "{{ input.company }}"
+        row_timestamp: "{{ input.timestamp }}"
+
+  - name: append_to_sheet
+    action: http_request
+    config:
+      method: POST
+      url: "https://sheets.googleapis.com/v4/spreadsheets/SHEET_ID/values/Leads!A1:append"
+      headers:
+        Authorization: "Bearer {{ env.GOOGLE_TOKEN }}"
+        Content-Type: application/json
+      body:
+        values:
+          - - "{{ steps.format_for_sheet.output.row_name }}"
+            - "{{ steps.format_for_sheet.output.row_email }}"
+            - "{{ steps.format_for_sheet.output.row_source }}"
+            - "{{ steps.format_for_sheet.output.row_company }}"
+            - "{{ steps.format_for_sheet.output.row_timestamp }}"
+    retry: 2
+    retry_delay: 2.0
+    on_error: continue
+
+  - name: slack_alert
+    action: slack_notify
+    config:
+      message: >
+        New lead captured!
+        Name: {{ input.name }}
+        Email: {{ input.email }}
+        Source: {{ input.source }}
+        Company: {{ input.company }}
+    retry: 1
+    on_error: continue
+
+metadata:
+  author: Workitu Tech
+  version: "1.0"
+  tags: [leads, crm, webhook]

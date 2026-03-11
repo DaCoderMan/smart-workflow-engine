@@ -1,0 +1,82 @@
+id: file-monitor
+name: File Upload Monitor
+description: >
+  Receives file upload events via webhook, processes the file metadata,
+  routes based on file type using conditional logic, and sends notifications.
+
+trigger:
+  type: webhook
+  config:
+    webhook_id: file-upload
+
+steps:
+  - name: validate_payload
+    action: validate
+    config:
+      required_fields:
+        - filename
+        - file_url
+        - file_type
+        - uploaded_by
+    on_error: stop
+
+  - name: extract_metadata
+    action: transform
+    config:
+      mapping:
+        filename: "{{ input.filename }}"
+        file_type: "{{ input.file_type }}"
+        file_url: "{{ input.file_url }}"
+        uploaded_by: "{{ input.uploaded_by }}"
+        file_size: "{{ input.file_size }}"
+        is_document: "{{ input.file_type }}"
+
+  - name: check_is_document
+    action: condition
+    config:
+      expression: "file_type in ('pdf', 'docx', 'xlsx', 'csv', 'txt')"
+      on_false: continue
+    on_error: continue
+
+  - name: process_document
+    action: http_request
+    config:
+      method: POST
+      url: "https://api.example.com/documents/process"
+      body:
+        url: "{{ input.file_url }}"
+        filename: "{{ input.filename }}"
+        type: "{{ input.file_type }}"
+    retry: 2
+    retry_delay: 2.0
+    on_error: continue
+
+  - name: notify_team
+    action: slack_notify
+    config:
+      message: >
+        File uploaded: {{ input.filename }}
+        Type: {{ input.file_type }}
+        By: {{ input.uploaded_by }}
+        URL: {{ input.file_url }}
+    retry: 1
+    on_error: continue
+
+  - name: notify_uploader
+    action: send_email
+    config:
+      to: "{{ input.uploaded_by }}"
+      subject: "File processed: {{ input.filename }}"
+      body: >
+        Your file "{{ input.filename }}" has been received and processed.
+
+        File type: {{ input.file_type }}
+        Status: Complete
+
+        This is an automated notification from Smart Workflow Engine.
+    on_error: continue
+
+metadata:
+  author: Workitu Tech
+  version: "1.0"
+  tags: [files, webhook, conditional]

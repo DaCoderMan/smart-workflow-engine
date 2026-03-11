@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Workflow Engine</title>
+    <style>
+        :root {
+            --bg-primary: #0f1117;
+            --bg-secondary: #1a1d27;
+            --bg-card: #212430;
+            --bg-hover: #2a2d3a;
+            --border: #2e3144;
+            --text-primary: #e4e6ed;
+            --text-secondary: #8b8fa3;
+            --text-muted: #5c6073;
+            --accent: #6366f1;
+            --accent-hover: #818cf8;
+            --green: #22c55e;
+            --green-bg: rgba(34, 197, 94, 0.12);
+            --red: #ef4444;
+            --red-bg: rgba(239, 68, 68, 0.12);
+            --yellow: #f59e0b;
+            --yellow-bg: rgba(245, 158, 11, 0.12);
+            --blue: #3b82f6;
+            --blue-bg: rgba(59, 130, 246, 0.12);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        header {
+            border-bottom: 1px solid var(--border);
+            padding: 20px 0;
+        }
+        header .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo-icon {
+            width: 36px; height: 36px;
+            background: var(--accent);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+        .logo h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .logo span {
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 400;
+        }
+        .header-actions {
+            display: flex; gap: 10px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn:hover { background: var(--bg-hover); border-color: var(--text-muted); }
+        .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent-hover); }
+
+        /* Stats row */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 24px 0;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 24px;
+        }
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 32px;
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* Table */
+        .table-wrapper {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+        td {
+            padding: 12px 16px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: var(--bg-hover); }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .badge-success { background: var(--green-bg); color: var(--green); }
+        .badge-failed  { background: var(--red-bg); color: var(--red); }
+        .badge-partial { background: var(--yellow-bg); color: var(--yellow); }
+        .badge-running { background: var(--blue-bg); color: var(--blue); }
+        .badge-never   { background: var(--bg-hover); color: var(--text-muted); }
+        .badge-queued  { background: var(--bg-hover); color: var(--text-secondary); }
+
+        .badge-trigger {
+            background: var(--bg-hover);
+            color: var(--text-secondary);
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+        .badge-webhook  { color: var(--blue); background: var(--blue-bg); }
+        .badge-schedule { color: var(--yellow); background: var(--yellow-bg); }
+        .badge-manual   { color: var(--text-secondary); }
+
+        .mono {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .enabled-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        .enabled-dot.on  { background: var(--green); }
+        .enabled-dot.off { background: var(--red); }
+
+        .error-text {
+            color: var(--red);
+            font-size: 12px;
+            max-width: 280px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .steps-count {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .step-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+        }
+        .step-dot.fail { background: var(--red); }
+        .step-dot.skip { background: var(--text-muted); }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--text-muted);
+        }
+        .empty-state p { font-size: 14px; margin-top: 8px; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .stats { grid-template-columns: 1fr; }
+            .table-wrapper { overflow-x: auto; }
+            table { min-width: 700px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container">
+        <div class="logo">
+            <div class="logo-icon">W</div>
+            <div>
+                <h1>Smart Workflow Engine</h1>
+                <span>Automation Dashboard</span>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn" onclick="reloadWorkflows()">Reload Workflows</button>
+            <a href="/docs" class="btn">API Docs</a>
+            <a href="/health" class="btn btn-primary">Health</a>
+        </div>
+    </div>
+</header>
+
+<main class="container" style="padding-top: 8px; padding-bottom: 48px;">
+
+    <!-- Stats -->
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-label">Registered Workflows</div>
+            <div class="stat-value">{{ total_workflows }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Total Executions</div>
+            <div class="stat-value">{{ total_executions }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Success Rate</div>
+            <div class="stat-value">{{ success_rate }}</div>
+        </div>
+    </div>
+
+    <!-- Workflows -->
+    <div class="section">
+        <div class="section-header">
+            <h2 class="section-title">Workflows</h2>
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Name</th>
+                        <th>Trigger</th>
+                        <th>Steps</th>
+                        <th>Runs</th>
+                        <th>Last Run</th>
+                        <th>Last Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for wf in workflows %}
+                    <tr>
+                        <td>
+                            <span class="enabled-dot {{ 'on' if wf.enabled else 'off' }}"></span>
+                            {{ 'Active' if wf.enabled else 'Disabled' }}
+                        </td>
+                        <td>
+                            <strong>{{ wf.name }}</strong>
+                            <br><span class="mono">{{ wf.id }}</span>
+                        </td>
+                        <td>
+                            <span class="badge-trigger badge-{{ wf.trigger }}">{{ wf.trigger }}</span>
+                        </td>
+                        <td>{{ wf.steps }}</td>
+                        <td>{{ wf.total_runs }}</td>
+                        <td class="mono">{{ wf.last_run }}</td>
+                        <td>
+                            <span class="badge badge-{{ wf.last_status }}">{{ wf.last_status }}</span>
+                        </td>
+                        <td>
+                            <button class="btn" onclick="executeWorkflow('{{ wf.id }}')" style="padding: 4px 12px; font-size: 12px;">
+                                Run
+                            </button>
+                            <button class="btn" onclick="toggleWorkflow('{{ wf.id }}')" style="padding: 4px 12px; font-size: 12px;">
+                                Toggle
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Execution History -->
+    <div class="section">
+        <div class="section-header">
+            <h2 class="section-title">Execution History</h2>
+        </div>
+        {% if executions %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Execution</th>
+                        <th>Workflow</th>
+                        <th>Trigger</th>
+                        <th>Status</th>
+                        <th>Steps</th>
+                        <th>Duration</th>
+                        <th>Started</th>
+                        <th>Error</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ex in executions %}
+                    <tr>
+                        <td class="mono">{{ ex.id }}</td>
+                        <td>{{ ex.workflow_name }}</td>
+                        <td>
+                            <span class="badge-trigger badge-{{ ex.trigger }}">{{ ex.trigger }}</span>
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ ex.status }}">{{ ex.status }}</span>
+                        </td>
+                        <td>
+                            <div class="steps-count">
+                                {{ ex.steps_ok }}/{{ ex.steps_total }}
+                                {% for i in range(ex.steps_ok) %}
+                                <span class="step-dot"></span>
+                                {% endfor %}
+                                {% for i in range(ex.steps_total - ex.steps_ok) %}
+                                <span class="step-dot fail"></span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td class="mono">{{ ex.duration_ms }}ms</td>
+                        <td class="mono">{{ ex.started_at }}</td>
+                        <td>
+                            {% if ex.error %}
+                            <span class="error-text" title="{{ ex.error }}">{{ ex.error }}</span>
+                            {% else %}
+                            <span class="mono" style="color: var(--text-muted);">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="table-wrapper">
+            <div class="empty-state">
+                <p>No executions yet. Trigger a workflow to see results here.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+</main>
+
+<script>
+    async function executeWorkflow(id) {
+        try {
+            const res = await fetch(`/api/workflows/${id}/execute`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            const data = await res.json();
+            alert(`Workflow executed: ${data.status}\nDuration: ${Math.round(data.duration_ms)}ms`);
+            location.reload();
+        } catch (e) {
+            alert('Error: ' + e.message);
+        }
+    }
+
+    async function toggleWorkflow(id) {
+        try {
+            const res = await fetch(`/api/workflows/${id}/toggle`, { method: 'POST' });
+            const data = await res.json();
+            location.reload();
+        } catch (e) {
+            alert('Error: ' + e.message);
+        }
+    }
+
+    async function reloadWorkflows() {
+        try {
+            const res = await fetch('/api/reload', { method: 'POST' });
+            const data = await res.json();
+            alert(`Reloaded ${data.reloaded} workflows`);
+            location.reload();
+        } catch (e) {
+            alert('Error: ' + e.message);
+        }
+    }
+
+    // Auto-refresh every 30 seconds
+    setTimeout(() => location.reload(), 30000);
+</script>
+
+</body>
+</html>

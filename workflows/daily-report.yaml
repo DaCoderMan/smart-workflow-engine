@@ -1,0 +1,61 @@
+id: daily-report
+name: Daily Metrics Report
+description: >
+  Runs on a daily cron schedule. Fetches metrics from an API,
+  formats them into a readable report, and sends it via email.
+
+trigger:
+  type: schedule
+  config:
+    cron: "0 9 * * 1-5"  # 9 AM, Monday through Friday
+
+steps:
+  - name: fetch_metrics
+    action: http_request
+    config:
+      method: GET
+      url: "https://api.example.com/metrics/daily"
+      headers:
+        Authorization: "Bearer {{ env.METRICS_API_KEY }}"
+      timeout: 15
+    retry: 3
+    retry_delay: 5.0
+    on_error: stop
+
+  - name: format_report
+    action: transform
+    config:
+      mapping:
+        subject: "Daily Metrics Report — {{ workflow.name }}"
+        body: >
+          Daily Metrics Report
+
+          Active Users: {{ steps.fetch_metrics.output.body.active_users }}
+          New Signups: {{ steps.fetch_metrics.output.body.new_signups }}
+          Revenue: ${{ steps.fetch_metrics.output.body.revenue }}
+          Churn Rate: {{ steps.fetch_metrics.output.body.churn_rate }}%
+
+          ---
+          Generated automatically by Smart Workflow Engine.
+
+  - name: send_report_email
+    action: send_email
+    config:
+      to: "team@example.com"
+      subject: "{{ steps.format_report.output.subject }}"
+      body: "{{ steps.format_report.output.body }}"
+      from_addr: "reports@example.com"
+    retry: 2
+    retry_delay: 3.0
+    on_error: continue
+
+  - name: log_completion
+    action: log
+    config:
+      message: "Daily report sent successfully"
+      level: info
+
+metadata:
+  author: Workitu Tech
+  version: "1.0"
+  tags: [reporting, email, scheduled]
